@@ -4,11 +4,16 @@
   "description": "RestoWaves test task",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index"
   },
   "author": "MaxKorop",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2"
+    "axios": "^1.6.3",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^8.0.3",
+    "node-cron": "^3.0.3",
+    "nodemon": "^3.0.2"
   }
 }
