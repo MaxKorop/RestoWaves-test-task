@@ -8,7 +8,6 @@ class ProductController {
     */
     async getProducts(req, res) {
         if (Object.keys(req.query).length !== 0) {
-            console.log(req.query);
             let { sizes } = req.query;
             let products;
             if (sizes instanceof Array) {
