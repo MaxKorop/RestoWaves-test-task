@@ -1,65 +1,87 @@
-const Product = require('../schemas/product');
+const { Models, Products } = require('../models/models'); // Припускаючи, що у вас є файли models.js з визначеннями моделей Sequelize
+const Sequelize = require('sequelize');
 
 class ProductController {
     /**
-        *Повертає товари. Якщо не передаються параметри, повертає всі товари з БД, якщо передаються параметри, повертає товари за параметрами
-        * @param {*} req 
-        * @param {*} res 
-    */
+     * Повертає товари. Якщо не передаються параметри, повертає всі товари з БД, якщо передаються параметри, повертає товари за параметрами
+     * @param {*} req
+     * @param {*} res
+     */
     async getProducts(req, res) {
-        if (Object.keys(req.query).length !== 0) {
-            let { sizes } = req.query;
-            let products;
-            if (sizes instanceof Array) {
-                products = await Product.find({ sizes: { $in: [...sizes].map(Number) } });
+        try {
+            if (Object.keys(req.query).length !== 0) {
+                let { sizes } = req.query;
+                sizes = Array.isArray(sizes) ? sizes.map(Number) : [Number(sizes)];
+                const products = await Products.findAll({
+                    where: {
+                        sizes: {
+                            [Sequelize.Op.overlap]: sizes,
+                        },
+                    },
+                });
+                res.json({ products });
             } else {
-                products = await Product.find({ sizes: Number(sizes) });
+                const products = await Products.findAll();
+                res.json({ products });
             }
-            res.json({ products });
-        } else {
-            const products = await Product.find();
-            res.json({ products });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
         }
     }
 
     /**
-        * Повертає товар за id з бази даних
-        * @param {*} req
-        * @param {*} res 
-    */
+     * Повертає товар за id з бази даних
+     * @param {*} req
+     * @param {*} res
+     */
     async getProductById(req, res) {
-        const { id } = req.params;
-        const product = await Product.findOne({ article: id });
-        res.json({ product });
+        try {
+            const { id } = req.params;
+            const product = await Products.findOne({ where: { article: id } });
+            res.json({ product });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
     }
 
     /**
-        * Змінює назву продукту. Отримує продукт за id та нову назву з req.body
-        * @param {*} req 
-        * @param {*} res 
-    */
+     * Змінює назву продукту. Отримує продукт за id та нову назву з req.body
+     * @param {*} req
+     * @param {*} res
+     */
     async changeProductName(req, res) {
-        const { id, name } = req.body;
-        console.log(id, name);
-        await Product.updateOne({ _id: id }, { $set: { name: name } }, { new: true });
-        const updatedProduct = await Product.findById(id);
-        res.json({ updatedProduct });
+        try {
+            const { id, name } = req.body;
+            await Products.update({ name }, { where: { _id: id } });
+            const updatedProduct = await Products.findByPk(id);
+            res.json({ updatedProduct });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
     }
 
     /**
      * Створює новий товар та додає його в БД
-     * @param {Object} product 
+     * @param {Object} models
      */
     async addProducts(models) {
-        for (const model in models) {
-            models[model].map(async (product) => {
-                const productFromDB = await Product.find({ article: product.article, model: model });
-                if (!productFromDB.length) {
-                    const newProduct = await Product.create({ model, ...product });
-                } else if (JSON.stringify({ model, ...product }) !== JSON.stringify(productFromDB)) {
-                    const updatedProduct = await Product.updateOne({ article: product.article, model: model }, { $set: { model, ...product } });
+        try {
+            for (const model in models) {
+                for (const product of models[model]) {
+                    const productFromDB = await Products.findOne({ where: { article: product.article, modelName: model } });
+
+                    if (!productFromDB) {
+                        await Products.create({ modelName: model, ...product });
+                    } else if (JSON.stringify({ modelName: model, ...product }) !== JSON.stringify(productFromDB)) {
+                        await Products.update({ modelName: model, ...product }, { where: { article: product.article, modelName: model } });
+                    }
                 }
-            })
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 }

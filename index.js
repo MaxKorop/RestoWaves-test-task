@@ -1,14 +1,12 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const router = require('./router/index');
 const dataFromTable = require('./dataFromTable');
-const cron = require('node-cron');
+const { db } = require('./models/models');
 
 //Ініціалізація app та визначення констант
 const app = express();
 const PORT = process.env.PORT || 3000;
-const mongoDBConnectionString = process.env.DB_CONNECTION_STRING;
 
 
 //Налаштування app
@@ -17,11 +15,10 @@ app.use('/api', router);
 
 const start = async () => {
     try {
-        //Підключення до MongoDB
-        mongoose.connect(mongoDBConnectionString)
-            .then(() => console.log("Mongoose connected"))
-            .catch((err) => console.log(`MongoDB connection error: ${err}`));
-        
+        //Підключення до PostgreSQL       
+        await db.authenticate();
+        await db.sync();
+
         app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
 
         //Планування витягування даних з таблиці
