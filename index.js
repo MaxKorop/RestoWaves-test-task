@@ -15,7 +15,7 @@ const mongoDBConnectionString = process.env.DB_CONNECTION_STRING;
 app.use(express.json());
 app.use('/api', router);
 
-const start = () => {
+const start = async () => {
     try {
         //Підключення до MongoDB
         mongoose.connect(mongoDBConnectionString)

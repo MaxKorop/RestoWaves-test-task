@@ -4,7 +4,7 @@
   "description": "RestoWaves test task",
   "main": "index.js",
   "scripts": {
-    "start": "node index"
+    "start": "nodemon index"
   },
   "author": "MaxKorop",
   "license": "ISC",
